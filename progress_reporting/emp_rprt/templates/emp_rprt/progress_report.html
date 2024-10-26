@@ -1,0 +1,194 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Workflow Progress</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+      select {
+        padding: 5px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Product Workflow Progress</h1>
+    <a class="btn-save" href="#" id="save-button">Save Progress</a>
+    <form method="POST" action="{% url 'logout' %}" class="logout-form">
+      {% csrf_token %}
+      <button type="submit" class="logout-button">Logout</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Product SKU</th>
+          {% for work in allowed_work %}
+          <th>{{ work.work }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for product_id, progress_entries in progress_data.items %}
+        <tr>
+          <td>{{ progress_entries.0.product }}</td>
+          <!-- Display the product name from the first entry -->
+          {% for progress in progress_entries %}
+          <td><select class="dropdown" name="progress_status" 
+            data-product-id="{{ progress.product.id }}" 
+            data-progress-row="{{ progress.id }}" 
+            data-work-id="{{ progress.workflow_stage.id }}" 
+            data-user-id="{{ progress.user.id }}"
+            onchange="updateStatus(this)">
+                <option value="not_started" {% if progress == "not_started" %}selected{% endif %}>Not Started</option>
+                <option value="ongoing" {% if progress == "ongoing" %}selected{% endif %}>Ongoing</option>
+                <option value="completed" {% if progress == "completed" %}selected{% endif %}>Completed</option>
+            </select></td>
+          <!-- Display status or any other field you want from the Progress model -->
+          {% endfor %}
+        </tr>
+        <tr></tr>
+        {% empty %}
+        <td colspan="3" class="no-data">No progress data available.</td>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <script>
+      document
+        .getElementById("save-button")
+        .addEventListener("click", function (e) {
+          e.preventDefault(); // Prevent the default anchor behavior
+
+          console.log("Save button clicked"); // Debugging log
+
+          // Get all dropdown elements (even though button is outside the table)
+          const dropdowns = document.querySelectorAll(".dropdown");
+          console.log("Dropdowns found:", dropdowns.length);
+
+          dropdowns.forEach((selectElement) => {
+            const productId = selectElement.dataset.productId;
+            const progressRow = selectElement.dataset.progressRow;
+            const workId = selectElement.dataset.workId;
+            const userId = selectElement.dataset.userId;
+            const status = selectElement.value;
+
+            // Using console.log instead of print for debugging in JavaScript
+            console.log(productId);
+            console.log(progressRow);
+            console.log(workId);
+            console.log(userId);
+            console.log(status);
+
+            console.log("Saving progress for:", progressRow, status); // Debugging log
+
+            // Only save if a valid status exists
+            if (status) {
+              fetch("/save-progress/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": "{{ csrf_token }}", // Ensure CSRF token is available
+                },
+                body: JSON.stringify({
+                  progress: progressRow,
+                  product_id: productId,
+                  work_id: workId,
+                  user_id: userId,
+                  status: status,
+                }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                  }
+                  return response.json();
+                })
+                .then((data) => {
+                  console.log("Success:", data);
+
+                  // If the status was "completed", disable the dropdown
+                  if (status === "completed") {
+                    selectElement.disabled = true;
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+            } else {
+              console.error("No status selected for progress ID:", progressId);
+            }
+          });
+        });
+
+        function updateStatus(selectElement){
+            const productId = selectElement.dataset.productId;
+            const progressRow = selectElement.dataset.progressRow;
+            const workId = selectElement.dataset.workId;
+            const userId = selectElement.dataset.userId;
+            const status = selectElement.value;
+
+            // Using console.log instead of print for debugging in JavaScript
+            console.log(productId);
+            console.log(progressRow);
+            console.log(workId);
+            console.log(userId);
+            console.log(status);
+
+            console.log("Saving progress for:", progressRow, status); // Debugging log
+
+            // Only save if a valid status exists
+            if (status) {
+              fetch("/save-progress/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": "{{ csrf_token }}", // Ensure CSRF token is available
+                },
+                body: JSON.stringify({
+                  progress: progressRow,
+                  product_id: productId,
+                  work_id: workId,
+                  user_id: userId,
+                  status: status,
+                }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                  }
+                  return response.json();
+                })
+                .then((data) => {
+                  console.log("Success:", data);
+
+                  // If the status was "completed", disable the dropdown
+                  if (status === "completed") {
+                    selectElement.disabled = true;
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+            } else {
+              console.error("No status selected for progress ID:", progressId);
+            }
+        }
+    </script>
+  </body>
+</html>

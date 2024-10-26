@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .signup-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], select {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .error-messages {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .error-messages ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .error-messages li {
+            margin: 5px 0;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <h2>Sign Up</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <!-- Name field -->
+            <input type="text" name="name" placeholder="Full Name" required>
+            
+            <!-- Email field -->
+            <input type="email" name="email" placeholder="Email" required>
+
+            <!-- Username field -->
+            <input type="text" name="username" placeholder="Username" required>
+
+            <!-- Password field -->
+            <input type="password" name="password" placeholder="Password" required>
+
+            <!-- Position field (dropdown from DB) -->
+            <select name="position_id" required>
+                <option value="" disabled selected>Select Position</option>
+                {% for position in positions %}
+                <option value="{{ position.id }}">{{ position.title }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Work field (dropdown from DB) -->
+            <select name="work_id" required>
+                <option value="" disabled selected>Select Work</option>
+                {% for work in works %}
+                <option value="{{ work.id }}">{{ work.title }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Sign Up button -->
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <!-- Error handling -->
+        {% if form.errors %}
+        <div class="error-messages">
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Link to login page -->
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>.
+        </div>
+    </div>
+</body>
+</html>

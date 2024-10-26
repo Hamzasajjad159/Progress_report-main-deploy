@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Progress Report</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif; /* Set a clean font */
+          background-color: #f8f9fa; /* Light background for the page */
+          margin: 0;
+          padding: 20px;
+      }
+
+      table {
+          width: 100%;
+          border-collapse: collapse; /* Remove space between cells */
+          border-radius: 10px; /* Rounded corners */
+          overflow: hidden; /* Hide overflow */
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      }
+
+      th, td {
+          padding: 12px; /* Increased padding for better spacing */
+          text-align: left; /* Align text to the left */
+      }
+
+      th {
+          background-color: #007bff; /* Blue background for headers */
+          color: white; /* White text color */
+          font-weight: bold; /* Bold text */
+      }
+
+      tbody tr:nth-child(even) {
+          background-color: #f2f2f2; /* Light grey for even rows */
+      }
+
+      tbody tr:hover {
+          background-color: #e0e0e0; /* Highlight row on hover */
+      }
+
+      .dropdown {
+          width: 100%; /* Full width for the dropdown */
+          padding: 8px; /* Padding for dropdown */
+          border: 1px solid #ced4da; /* Border */
+          border-radius: 5px; /* Rounded corners */
+          appearance: none; /* Remove default dropdown arrow */
+          background-color: #fff; /* White background */
+          background-image: url('data:image/png;base64,...'); /* Optional: Custom arrow image */
+          background-repeat: no-repeat; /* Prevent repeat */
+          background-position: right 10px center; /* Position the arrow */
+          background-size: 12px; /* Size of the arrow */
+          cursor: pointer; /* Pointer cursor for dropdown */
+      }
+
+      .no-data {
+          text-align: center; /* Center text for no data */
+          font-style: italic; /* Italic style for emphasis */
+      }
+      .btn-save, .logout-button {
+          margin-left: 10px; /* Add space between buttons */
+          padding: 10px 15px; /* Adjust padding for better appearance */
+          text-decoration: none; /* Remove underline from the link */
+          border: none; /* Remove border from button */
+          border-radius: 5px; /* Rounded corners */
+          cursor: pointer; /* Pointer cursor on hover */
+          transition: background-color 0.3s; /* Smooth transition */
+      }
+      .btn-save {
+          background-color: #4CAF50; /* Green background for save */
+          color: white; /* White text */
+      }
+      .btn-logout:hover, .btn-save:hover {
+          background-color: #218838;
+      }
+      .logout-form {
+          display: inline; /* Keeps the form inline with other elements */
+      }
+      .logout-button {
+          background-color: #ff4c4c; /* Red background for logout */
+          color: white; /* White text color */
+          padding: 10px 20px; /* Padding for the button */
+          border: none; /* No border */
+          border-radius: 5px; /* Rounded corners */
+          cursor: pointer; /* Pointer cursor on hover */
+          transition: background-color 0.3s; /* Transition for hover effect */
+      }
+
+      .logout-button:hover {
+          background-color: #ff1a1a; /* Darker red on hover */
+      }
+      .button-container {
+          display: flex; /* Use flexbox for layout */
+          justify-content: flex-end; /* Align items to the right */
+          align-items: center; /* Vertically center items */
+          margin: 20px; /* Add some margin if needed */
+      }
+
+    </style>
+  </head>
+  <body>
+    <h1>Progress Report</h1>
+
+    
+    
+    <div class="button-container">
+      <a class="btn-save" href="#" id="saveBtn">Save Progress</a>
+      <form method="POST" action="{% url 'logout' %}" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="logout-button">Logout</button>
+      </form>
+    </div>
+
+    <table>
+      <thead>
+          <tr>
+              <th>Product SKU</th>
+              {% for work in workList %}
+              {% if work.title in user_work_titles %} <th>{{ work.title }}</th> {% endif %} <!-- Make sure to use work directly for each column -->
+              {% endfor %}
+              <th>User</th>
+              <th>Date Last Changed</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for progress in progress_data %}
+          <tr>
+              <td>{{ progress.product.sku }}</td>
+                {% for work in workList %}  
+                 <!-- WORK TITLE :{{ work.title }}
+                Progress TITILE: {{ progress.work.title }}
+                USER TITLE: {{ user_work_titles }}<br> -->
+                {% if work.title == progress.work.title and work.title in user_work_titles %}
+                    <td><select class="dropdown" name="status"
+                      data-progress-id="{{ progress.id }}" 
+                      data-product-id="{{ progress.product.id }}" 
+                      data-work-id="{{ work.id }}" 
+                      data-user-id="{{ progress.user.id }}" 
+                      onchange="updateStatusColor(this)">
+                      <option value="not_started" {% if progress.status == "not_started" %}selected{% endif %}>Not Started</option>
+                      <option value="ongoing" {% if progress.status == "ongoing" %}selected{% endif %}>Ongoing</option>
+                      <option value="completed" {% if progress.status == "completed" %}selected{% endif %}>Completed</option>
+                    </select></td>
+                {% elif work.title in user_work_titles %}
+                  <td></td>
+                {% endif %}
+                {% endfor %}
+              <td>{{ progress.user.name }}</td>
+              <td>{{ progress.date_last_changed }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="5" class="no-data">No progress data available.</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+  
+  {% for product_info in product_data %}
+  <tr>
+      <td>{{ product_info.product.sku }}</td>
+      <td>{{ product_info.product.title }}</td>
+      {% for work in allowed_works %}
+          <td>
+              {% with index=forloop.counter0 %}
+                  {% with progress=product_info.works|get_item:index %}
+                      {% if progress %}
+                          <select class="dropdown" name="progress_status" 
+                          data-product-id="{{ product_info.product.id }}" 
+                          data-progress-row="{{ progress.id }}" 
+                          data-work-id="{{ work.id }}" 
+                          data-user-id="{{ user.id }}">
+                              <option value="not_started" {% if progress == "not_started" %}selected{% endif %}>Not Started</option>
+                              <option value="ongoing" {% if progress == "ongoing" %}selected{% endif %}>Ongoing</option>
+                              <option value="completed" {% if progress == "completed" %}selected{% endif %}>Completed</option>
+                          </select>
+                      {% else %}
+                          <!-- Empty cell if no progress -->
+                      {% endif %}
+                  {% endwith %}
+              {% endwith %}
+          </td>
+      {% endfor %}
+      <td>{{ user.name }}</td>
+  </tr>
+{% endfor %}
+    
+
+    <script>
+    // Add event listener to Save button
+    // Add event listener to Save button
+document.getElementById('saveBtn').addEventListener('click', function(e) {
+    e.preventDefault();  // Prevent the default anchor behavior
+
+    console.log('Save button clicked');  // Debugging log
+
+    // Get all dropdown elements (even though button is outside the table)
+    const dropdowns = document.querySelectorAll('.dropdown');
+
+    dropdowns.forEach((selectElement) => {
+        const progressId = selectElement.dataset.progressId;
+        const productId = selectElement.dataset.productId;
+        const workId = selectElement.dataset.workId;
+        const userId = selectElement.dataset.userId;
+        const status = selectElement.value;
+
+        console.log('Saving progress for:', progressId, status);  // Debugging log
+
+        // Only save if a valid status exists
+        if (status) {
+            fetch('/update-progress/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // Ensure CSRF token is available
+                },
+                body: JSON.stringify({
+                    progress_id: progressId,
+                    product_id: productId,
+                    work_id: workId,
+                    user_id: userId,
+                    status: status
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+
+                // If the status was "completed", disable the dropdown
+                if (status === 'completed') {
+                    selectElement.disabled = true;
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        } else {
+            console.error('No status selected for progress ID:', progressId);
+        }
+    });
+});
+
+    //   function updateStatus(selectElement) {
+        
+    //     const progressId = selectElement.dataset.progressId; // Get the progress ID
+    //     const status = selectElement.value; // Get the selected status
+    //     const productId = selectElement.dataset.productId;
+    //     const workId = selectElement.dataset.workId;
+    //     const userId = selectElement.dataset.userId;
+
+    //     // Log the data being sent
+    //     console.log({ progressId, productId, workId, userId, status });
+
+    //     // Send the data to the server using fetch
+    //     fetch('/update-progress/', { // Update with the correct URL
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //             'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for security
+    //         },
+    //         body: JSON.stringify({ 
+    //             progress_id: progressId,
+    //             product_id: productId,
+    //             work_id: workId,
+    //             user_id: userId,
+    //             status: status 
+    //         })
+    //     })
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             throw new Error('Network response was not ok');
+    //         }
+    //         return response.json();
+    //     })
+    //     .then(data => {
+    //         console.log('Success:', data);
+    //     })
+    //     .catch((error) => {
+    //         console.error('Error:', error);
+    //     });
+    // }
+
+
+    document.querySelectorAll('.dropdown').forEach(select => {
+        updateStatusColor(select); // Initialize the color based on the selected value
+    });
+
+    function updateStatusColor(selectElement) {       
+      if (selectElement.value === "ongoing") {
+            selectElement.style.backgroundColor = 'red';
+            selectElement.style.color = 'white';
+        } else if (selectElement.value === "completed") {
+            selectElement.style.backgroundColor = 'green';
+            selectElement.style.color = 'white';
+        }
+        else if (selectElement.value === "not_started") {
+            selectElement.style.backgroundColor = 'white';
+            selectElement.style.color = 'black';
+        }
+    }
+
+    </script>
+  </body>
+</html>
