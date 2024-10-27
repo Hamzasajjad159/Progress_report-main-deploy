@@ -6,6 +6,12 @@ EmpPosition: title (Photographer, editor, manager etc)
 userPosition: user_id, position_id, work_id (in case user work in multiple positions)
 progressUpdated: product_id, user_id, date_changed, status_changed_to, work_id (this is to keep log of every change that can be used for user reports and analytics)
 
+refresh on change.
+uploading excel
+adding dataentrry
+changing progress
+dashboard summary
+
 {% for product_sku, progress_entries in progress_data.items %}
 
 <tr>
