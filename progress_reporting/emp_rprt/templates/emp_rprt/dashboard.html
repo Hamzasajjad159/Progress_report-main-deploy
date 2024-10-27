@@ -6,7 +6,7 @@
   <body>
     <h1>Welcome to the Dashboard</h1>
     <p>Hello, {{ user.username }}! You are logged in.</p>
-
+    <a href="{% url 'data_entry' %}" class="button">Data Entry</a>
     <ul>
       <li>
         <form method="POST" action="{% url 'logout' %}">

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Upload Excel</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <form id="upload-form" enctype="multipart/form-data">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="button" onclick="uploadExcel()">Upload</button>
+    </form>
+
+    <!-- Table to display results -->
+    <table id="results-table" style="display: none">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Title</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+
+    <script>
+      function uploadExcel() {
+        var formData = new FormData(document.getElementById("upload-form"));
+        $.ajax({
+          url: "{% url 'upload_excel' %}", // Make sure to set this URL correctly
+          type: "POST",
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            // Clear previous results
+            $("#results-body").empty();
+
+            // Display the results table
+            $("#results-table").show();
+
+            // Populate the table with data
+            response.products.forEach(function (product) {
+              $("#results-body").append(
+                `<tr>
+                                <td>${product.sku}</td>
+                                <td>${product.title}</td>
+                                <td>${product.quantity}</td>
+                            </tr>`
+              );
+            });
+          },
+          error: function (xhr, status, error) {
+            alert("An error occurred while uploading the file.");
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -17,8 +17,6 @@ class WorkflowStage(models.Model):
         return self.title
 
 
-
-
 # Employee Position model to define positions in the company
 class Department(models.Model):
     title = models.CharField(max_length=50, unique=True)
@@ -43,6 +41,7 @@ class EmpUser(AbstractUser):
 class Products(models.Model):
     title = models.CharField(max_length=100)
     sku = models.CharField(max_length=10, unique=True)
+    # variant_quantity = models.CharField(max_length=10)
     date_added = models.DateField(auto_now_add=True)
     date_completed = models.DateField(null=True, blank=True)  # Optional completion date
 
@@ -62,26 +61,7 @@ class Progress(models.Model):
     def __str__(self):
         return f"Progress on {self.product} by {self.user}"
 
-    def complete_task(self):
-        if self.status == 'completed':
-            # Get the next stages associated with the current workflow stage
-            next_stages = self.workflow_stage.next_stages.all()
-
-            if next_stages.exists():
-                # If there are next stages, create new progress entries for each
-                for next_stage in next_stages:
-                    Progress.objects.create(
-                        work=self.work,
-                        product=self.product,
-                        user=self.user,  # Optionally assign a user for the next task
-                        workflow_stage=next_stage,
-                        status='not_started',
-                        date_last_changed=self.date_last_changed,
-                    )
-            else:
-                # No next stages, mark the product as complete
-                self.status = 'completed'  # or set to an appropriate status that indicates completion
-                self.save()  # Save the updated progress
+    
 
 class UserDepartment(models.Model):
     user = models.ForeignKey(EmpUser, on_delete=models.CASCADE, null=True, blank=True)
@@ -100,4 +80,4 @@ class ProgressUpdated(models.Model):
     status_changed_to = models.CharField(max_length=20, choices=[('not_started', 'Not Started'), ('ongoing', 'Ongoing'), ('completed', 'Completed')])
 
     def __str__(self):
-        return f"{self.product.title} - {self.work.title} - {self.status_changed_to}"
+        return f"{self.product.title}  - {self.status_changed_to}"

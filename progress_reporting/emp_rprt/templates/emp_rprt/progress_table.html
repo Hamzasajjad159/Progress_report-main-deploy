@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -110,13 +111,21 @@
           <button type="submit" class="logout-button">Logout</button>
       </form>
     </div>
-
+    <td><select class="dropdown" name="progress_status" 
+        data-product-id="{{ progress.product.id }}" 
+        data-progress-row="{{ progress.id }}" 
+        data-work-id="{{ progress.workflow_stage.id }}" 
+        onchange="updateStatus(this)"
+        {% if progress.status == "completed" %} disabled = true {% endif %}>
+            <option value="not_started" {% if progress.status == "not_started" %}selected{% endif %}>Not Started</option>
+            <option value="ongoing" {% if progress.status == "ongoing" %}selected{% endif %}>Ongoing</option>
+            <option value="completed" {% if progress.status == "completed" %}selected{% endif %}>Completed</option>
+        </select>{{ progress.user.name }}</td>
     <table>
       <thead>
           <tr>
               <th>Product SKU</th>
-              {% for work in workList %}
-              {% if work.title in user_work_titles %} <th>{{ work.title }}</th> {% endif %} <!-- Make sure to use work directly for each column -->
+              {% for work in user_work_titles %}<th>{{ work.title }}</th>  <!-- Make sure to use work directly for each column -->
               {% endfor %}
               <th>User</th>
               <th>Date Last Changed</th>
@@ -126,11 +135,11 @@
           {% for progress in progress_data %}
           <tr>
               <td>{{ progress.product.sku }}</td>
-                {% for work in workList %}  
+                {% for work in user_work_titles %}  
                  <!-- WORK TITLE :{{ work.title }}
                 Progress TITILE: {{ progress.work.title }}
                 USER TITLE: {{ user_work_titles }}<br> -->
-                {% if work.title == progress.work.title and work.title in user_work_titles %}
+                {% if work.title == progress.workflow_stage.title %}
                     <td><select class="dropdown" name="status"
                       data-progress-id="{{ progress.id }}" 
                       data-product-id="{{ progress.product.id }}" 
@@ -163,7 +172,7 @@
       {% for work in allowed_works %}
           <td>
               {% with index=forloop.counter0 %}
-                  {% with progress=product_info.works|get_item:index %}
+                  {% with progress=product_info.works|get_items:index %}
                       {% if progress %}
                           <select class="dropdown" name="progress_status" 
                           data-product-id="{{ product_info.product.id }}" 
