@@ -5,7 +5,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Product Workflow Progress</title>
+    <title>Product Progress</title>
     <style>
       body {
           font-family: Arial, sans-serif; /* Set a clean font */
@@ -23,6 +23,7 @@
       }
 
       th, td {
+          font-family: Arial, sans-serif;
           padding: 12px; /* Increased padding for better spacing */
           text-align: left; /* Align text to the left */
       }
@@ -97,7 +98,7 @@
   </head>
   <body>
     <div class="container">
-      <h1 class="text-center">Product Workflow Progress</h1>
+      <h1 class="text-center" >Product Progress</h1>
       <div class="button-container">
         <form method="POST" action="{% url 'logout' %}" class="logout-form">
           {% csrf_token %}
@@ -125,7 +126,7 @@
                       data-product-id="{{ progress.product.id }}"
                       data-progress-row="{{ progress.id }}"
                       data-work-id="{{ progress.workflow_stage.id }}"
-                      onchange="updateStatus(this)"
+                      onchange="updateStatus(this); changeColor(this);"
                       {% if progress.status == "completed" %} disabled {% endif %}>
                 <option value="not_started" {% if progress.status == "not_started" %}selected{% endif %}>Not Started</option>
                 <option value="ongoing" {% if progress.status == "ongoing" %}selected{% endif %}>Ongoing</option>
@@ -149,6 +150,17 @@
 
     <script>
       function updateStatus(selectElement) {
+        if (selectElement.value === "ongoing") {
+            selectElement.style.backgroundColor = 'orange';
+            selectElement.style.color = 'white';
+        } else if (selectElement.value === "completed") {
+            selectElement.style.backgroundColor = 'green';
+            selectElement.style.color = 'white';
+        }
+        else if (selectElement.value === "not_started") {
+            selectElement.style.backgroundColor = 'white';
+            selectElement.style.color = 'black';
+        }
         const productId = selectElement.dataset.productId;
         const progressRow = selectElement.dataset.progressRow;
         const workId = selectElement.dataset.workId;
@@ -189,6 +201,28 @@
           console.error("No status selected for progress ID:", progressId);
         }
       }
+      function changeColor(selectElement) {
+        const selectedValue = selectElement.value;
+
+        // Reset the background color for all cases
+        selectElement.style.backgroundColor = ""; 
+
+        // Change the background color based on the selected value
+        if (selectedValue === "not_started") {
+          selectElement.style.backgroundColor = "red"; // Color for Not Started
+          selectElement.style.color = "white"; // Change text color for visibility
+        } else if (selectedValue === "ongoing") {
+          selectElement.style.backgroundColor = "orange"; // Color for Ongoing
+          selectElement.style.color = "white"; // Change text color for visibility
+        } else if (selectedValue === "completed") {
+          selectElement.style.backgroundColor = "green"; // Color for Completed
+          selectElement.style.color = "white"; // Change text color for visibility
+        }
+      }
+      window.onload = function() {
+          const dropdowns = document.querySelectorAll('.dropdown');
+          dropdowns.forEach(dropdown => changeColor(dropdown));
+        };
     </script>
   </body>
 </html>

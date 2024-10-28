@@ -2,19 +2,179 @@
 <html>
   <head>
     <title>Dashboard</title>
+    <style>
+      /* Basic Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* Body Styles */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        padding: 20px;
+      }
+
+      /* Container */
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Header */
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      p {
+        text-align: center;
+        font-size: 1.1em;
+        color: #666;
+      }
+
+      /* Button */
+      .button,
+      button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.3s;
+      }
+
+      .button:hover,
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      /* Logout Button */
+      form {
+        display: inline-block;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      /* Table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+      }
+
+      th {
+        background-color: #007bff;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      td {
+        background-color: #f9f9f9;
+      }
+
+      tbody tr:hover {
+        background-color: #f1f1f1;
+      }
+
+      .no-data {
+        text-align: center;
+        color: #888;
+        font-style: italic;
+      }
+
+      /* Dropdown */
+      .dropdown {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        width: 100%;
+        background-color: #fff;
+        color: #333;
+      }
+
+      /* Muted Text */
+      .text-muted {
+        color: #888;
+        font-size: 0.9em;
+        margin-top: 5px;
+      }
+    </style>
   </head>
   <body>
-    <h1>Welcome to the Dashboard</h1>
-    <p>Hello, {{ user.username }}! You are logged in.</p>
-    <a href="{% url 'data_entry' %}" class="button">Data Entry</a>
-    <ul>
-      <li>
-        <form method="POST" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit">Logout</button>
-        </form>
-      </li>
-      <!-- You can add more dashboard-related options here -->
-    </ul>
+    <div class="container">
+      <div>
+        <h1>Welcome to the Dashboard</h1>
+        <p>Hello, {{ user.username }}! You are logged in.</p>
+      </div>
+      <div style="text-align: center">
+        <a href="{% url 'data_entry' %}" class="button">Data Entry</a>
+      
+
+      <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+      </form></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product SKU</th>
+            {% for work in allowed_work %}
+            <th>{{ work }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for product_sku, progress_entries in progress_data.items %}
+          <tr>
+            <td>{{ product_sku }}</td>
+            {% for progress in progress_entries %} {% if progress %}
+            <td {% if progress.status == "not_started" %} style="background-color: red; color:white;" {% elif progress.status == "ongoing" %} style="background-color: orange; color:white;" {% elif progress.status == "completed" %} style="background-color: green; color:white;" {% endif %}>
+              {% if progress.status == "not_started" %}
+              <!--  -->
+              Not Started
+              <!--  -->
+              {% elif progress.status == "ongoing" %}
+              <!--  -->
+              Ongoing
+              <!--  -->
+              {% elif progress.status == "completed" %}
+              <!--  -->
+              Completed
+              <!--  -->
+              {% endif %}
+              <div style="color:white;" class="text-muted">User: {{ progress.user.name }}</div>
+            </td>
+            {% else %}
+            <td></td>
+            {% endif %} {% endfor %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{{ allowed_work|length|add:1 }}" class="no-data">
+              No progress data available.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </body>
 </html>

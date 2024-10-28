@@ -41,7 +41,10 @@ class EmpUser(AbstractUser):
 class Products(models.Model):
     title = models.CharField(max_length=100)
     sku = models.CharField(max_length=10, unique=True)
-    # variant_quantity = models.CharField(max_length=10)
+    variant_quantity = models.IntegerField()
+    variant_colors = models.CharField(max_length=100)
+    sp = models.IntegerField()
+    cp = models.IntegerField()
     date_added = models.DateField(auto_now_add=True)
     date_completed = models.DateField(null=True, blank=True)  # Optional completion date
 

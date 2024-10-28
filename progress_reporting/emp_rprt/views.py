@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
-from .forms import UsernameLoginForm
+from .forms import UsernameLoginForm, dataEntryForm, UploadFileForm
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -10,6 +10,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db.models import Q
 import openpyxl
+from django.core import serializers
+from django.core.serializers import serialize
+from django.utils import timezone
 
 # Create your views here.
 from .models import EmpUser
@@ -132,7 +135,7 @@ def save_progress_view(request):
                 # progress.workflow_stage = progress.workflow_stage.next_stages.first()
                 progress.save()
                 
-                print(progress.workflow_stage.next_stages.first())
+                # print(progress.workflow_stage.next_stages.first())
                 
                 ProgressUpdated.objects.create(
                     product=progress.product,
@@ -152,6 +155,11 @@ def save_progress_view(request):
                         workflow_stage=progress.workflow_stage.next_stages.first(),
                         status_changed_to="not_started",
                     )
+                elif progress.workflow_stage.title == "Uploading":
+                    product = Products.objects.get(sku = progress.product.sku)
+                    product.date_completed = timezone.now().date()
+                    product.save()
+                    
                 return JsonResponse({'success': True})
         except Progress.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Progress not found'}, status=404)
@@ -319,15 +327,114 @@ def logout_view(request):
     return redirect('login') 
 
 def dashboard(request):
-    return render(request, 'emp_rprt/dashboard.html')
+    
+    user = request.user  # Get the current logged-in user
+
+    products = Products.objects.all()
+    progress_data = {}
+    # Get the work details the user is allowed to see based on UserDepartment
+    allowed_work = WorkflowStage.objects.all().distinct()
+    
+    for product in products:
+        work_progress_list = []
+        for aw in allowed_work:
+
+            progress_entries = Progress.objects.filter(workflow_stage__title=aw, product = product).first()
+            work_progress_list.append(progress_entries if progress_entries else None)
+
+
+        progress_data[product.sku] = work_progress_list
+    
+    for product_id, work_progress_list in progress_data.items():
+        print(f"Product ID: {product_id}")
+    
+        for progress in enumerate(work_progress_list, start=1):
+            if progress:
+                print(f"Progress Object - {progress}")
+            else:
+                print(f"No progress data available")
+
+    return render(request, 'emp_rprt/dashboard.html', {
+        'progress_data': progress_data,
+        'allowed_work':allowed_work
+        })
+    # return render(request, 'emp_rprt/dashboard.html')
 
 def data_entry(request):
-    return render(request, 'emp_rprt/data_entry.html')
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+         # Handle product addition or update logic
+        product_id = request.POST.get('product_id')  # Assuming you have a hidden input for product ID in your form
+        if product_id:
+            # Update existing product
+            product = get_object_or_404(Products, id=product_id)
+            form = dataEntryForm(request.POST, instance=product)
+        else:
+            # Create new product
+            form = dataEntryForm(request.POST)
+        
+        if form.is_valid():
+            product = form.save()
+            workflow = WorkflowStage.objects.first()
+            
+            Progress.objects.create(
+                product = product,
+                user = request.user,
+                workflow_stage = workflow,
+                status = 'completed',
+            )
+            Progress.objects.create(
+                product = product,
+                user = request.user,
+                workflow_stage = workflow.next_stages.first(),
+                status = 'not_started',
+            )
+            # Save the product to the database
+            return JsonResponse({'success': True, 'id': product.id})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+        
+        # form.save()  # Save data to MySQL table
+        # return redirect('data_entry')  # Redirect to a list view after saving
+    
+    elif request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Serialize the product data to JSON format for AJAX
+        
+        product_id = request.GET.get('id')
+        if product_id:
+            # Fetch product details for editing
+            product = get_object_or_404(Products, id=product_id)
+            data = {
+                'product': {
+                    'id': product.id,
+                    'fields': {
+                        'sku': product.sku,
+                        'title': product.title,
+                        'sp': product.sp,
+                        'cp': product.cp,
+                        'variant_quantity': product.variant_quantity,
+                        'variant_colors': product.variant_colors,
+                    },
+                }
+            }
+            return JsonResponse(data)
+        else:
+            products = Products.objects.all()
+            products_json = json.loads(serialize('json', products))
+            return JsonResponse({'products': products_json}, safe=False)
+
+    else:
+        form = dataEntryForm()
+        products = Products.objects.all()
+        return render(request, 'emp_rprt/data_entry.html', {'form': form, 'products': products})
+    # If it's a regular GET request, render the template with the form and products
+    # products = Products.objects.all()
+    # return render(request, 'emp_rprt/data_entry', {'form': form, 'products': products})
+    
+    # # return render(request, 'emp_rprt/data_entry.html', {'form': form})
 
 def upload_excel(request):
-    print("imhere")
     if request.method == 'POST':
-        form = UploadExcelForm(request.POST, request.FILES)
+        form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             excel_file = request.FILES['file']
             workbook = openpyxl.load_workbook(excel_file)
