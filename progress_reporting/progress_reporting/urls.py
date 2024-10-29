@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from emp_rprt.views import progress_table_view
 from django.contrib.auth.views import LogoutView
 from emp_rprt import views
 
@@ -24,7 +23,6 @@ from emp_rprt import views
 urlpatterns = [
     path('', views.login_view, name='login'),
     path("admin/", admin.site.urls),
-    # path('progress/', progress_table_view, name='progress'),
     path('product-progress/', views.product_progress_view, name='product_progress'), 
     path('save-progress/', views.save_progress_view, name='save_progress'),
     path('login/', views.login_view, name='login'),
@@ -32,9 +30,5 @@ urlpatterns = [
     path('data-entry/', views.data_entry, name='data_entry'),
     path('upload/', views.upload_excel, name='upload_excel'),
     path('logout/', views.logout_view, name='logout'),
-    # path('update-progress/', views.update_progress, name='update_progress'),  # New URL for updating progress
     path('signup/', views.signup_view, name='signup'),
-    
-
-
 ]

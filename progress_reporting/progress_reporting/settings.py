@@ -93,6 +93,23 @@ DATABASES = {
     }
 }
 
+# ALLOWED_HOSTS	progress.grohubsolutions.com	
+
+# DATABASE_URL	mysql://grohnyem_root:^&rvw6jAX66L@localhost:3306/grohnyem_progress_report_db	
+
+# DJANGO_SECRET_KEY	django-insecure-h0oaa8-1o4nh@07-a(&c_!#k4ma+t7u3cw(&#)a^^wz68e8*4e	
+
+# DJANGO_SETTINGS_MODULE	progress_reporting.settings
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'grohnyem_progress_report_db',
+#         'USER': 'grohnyem_root',
+#         'PASSWORD': '^&rvw6jAX66L',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
 
 
 # Password validation

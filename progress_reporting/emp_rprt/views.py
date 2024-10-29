@@ -44,7 +44,7 @@ WORKFLOW_STAGES = [
 def product_progress_view(request):
     user = request.user  # Get the current logged-in user
 
-    products = Products.objects.all()
+    products = Products.objects.filter(date_completed__isnull=True)
     progress_data = {}
     # Get the work details the user is allowed to see based on UserDepartment
     allowed_work = UserDepartment.objects.filter(user=user)
@@ -59,22 +59,18 @@ def product_progress_view(request):
             progress_entries = Progress.objects.filter(workflow_stage__title=aw.work, product = product).first()
             work_progress_list.append(progress_entries if progress_entries else None)
             
-            # for progress in progress_entries:
-            #     if product_id not in progress_data:
-            #         progress_data[product.id] = []  # Initialize list if not present
-                
-                # progress_data[product_id].append(progress)  # Append the progress entry to the list
+
 
         progress_data[product.sku] = work_progress_list
     
-    for product_id, work_progress_list in progress_data.items():
-        print(f"Product ID: {product_id}")
+    # for product_id, work_progress_list in progress_data.items():
+    #     print(f"Product ID: {product_id}")
     
-        for progress in enumerate(work_progress_list, start=1):
-            if progress:
-                print(f"Progress Object - {progress}")
-            else:
-                print(f"No progress data available")
+    #     for progress in enumerate(work_progress_list, start=1):
+    #         if progress:
+    #             print(f"Progress Object - {progress}")
+    #         else:
+    #             print(f"No progress data available")
 
     # Now, progress_data is a dictionary where each key is a product ID and each value is a list of Progress objects
     return render(request, 'emp_rprt/progress_report.html', {
@@ -143,19 +139,21 @@ def save_progress_view(request):
                     workflow_stage=progress.workflow_stage,
                     status_changed_to=new_status,
                 )
-                
-                if progress.workflow_stage.next_stages.first():
-                    Progress.objects.create(product = progress.product,
-                                            workflow_stage = progress.workflow_stage.next_stages.first(),
-                                            status = "not_started")
-                    
-                    ProgressUpdated.objects.create(
-                        product=progress.product,
-                        user=user,
-                        workflow_stage=progress.workflow_stage.next_stages.first(),
-                        status_changed_to="not_started",
-                    )
-                elif progress.workflow_stage.title == "Uploading":
+                for stage in progress.workflow_stage.next_stages.all():
+                    # print(progress.workflow_stage.next_stages)
+                    if stage:
+                        Progress.objects.create(product = progress.product,
+                                                workflow_stage = stage,
+                                                status = "not_started")
+                        
+                        ProgressUpdated.objects.create(
+                            product=progress.product,
+                            user=user,
+                            workflow_stage=stage,
+                            status_changed_to="not_started",
+                        )
+                        
+                if progress.workflow_stage.title == "Reels":
                     product = Products.objects.get(sku = progress.product.sku)
                     product.date_completed = timezone.now().date()
                     product.save()
@@ -330,29 +328,34 @@ def dashboard(request):
     
     user = request.user  # Get the current logged-in user
 
-    products = Products.objects.all()
+    products = Products.objects.all()#filter(date_completed__isnull=True)
     progress_data = {}
     # Get the work details the user is allowed to see based on UserDepartment
     allowed_work = WorkflowStage.objects.all().distinct()
     
     for product in products:
         work_progress_list = []
+        # product_report = ProgressUpdated.objects.get(product = product, status_changed_to = "completed")
         for aw in allowed_work:
 
             progress_entries = Progress.objects.filter(workflow_stage__title=aw, product = product).first()
+            
             work_progress_list.append(progress_entries if progress_entries else None)
 
 
+            
         progress_data[product.sku] = work_progress_list
     
-    for product_id, work_progress_list in progress_data.items():
-        print(f"Product ID: {product_id}")
+    # for product_id, work_progress_list in progress_data.items():
+    #     print(f"Product ID: {product_id}")
     
-        for progress in enumerate(work_progress_list, start=1):
-            if progress:
-                print(f"Progress Object - {progress}")
-            else:
-                print(f"No progress data available")
+    #     for progress in enumerate(work_progress_list, start=1):
+    #         if progress:
+    #             print(f"Progress Object - {progress}")
+    #         else:
+    #             print(f"No progress data available")
+
+
 
     return render(request, 'emp_rprt/dashboard.html', {
         'progress_data': progress_data,

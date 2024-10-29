@@ -144,7 +144,9 @@
         <tbody>
           {% for product_sku, progress_entries in progress_data.items %}
           <tr>
-            <td>{{ product_sku }}</td>
+            <td><button class="open-button" data-id="{{ product.id }}">
+              {{ product_sku }}
+            </button></td>
             {% for progress in progress_entries %} {% if progress %}
             <td {% if progress.status == "not_started" %} style="background-color: red; color:white;" {% elif progress.status == "ongoing" %} style="background-color: orange; color:white;" {% elif progress.status == "completed" %} style="background-color: green; color:white;" {% endif %}>
               {% if progress.status == "not_started" %}
@@ -158,10 +160,13 @@
               {% elif progress.status == "completed" %}
               <!--  -->
               Completed
+              <div style="color:rgb(0, 0, 0);" class="text-muted">Date Completed: {{ progress.date_last_changed }}</div>
+                
               <!--  -->
               {% endif %}
               <div style="color:white;" class="text-muted">User: {{ progress.user.name }}</div>
-            </td>
+              
+              </td>
             {% else %}
             <td></td>
             {% endif %} {% endfor %}
