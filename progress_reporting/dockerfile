@@ -1,12 +1,12 @@
 # Use the official Python image as the base image
 FROM python:3.10-slim
 
-# Install system dependencies
+# Install system dependencies for mysqlclient
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpq-dev \
     pkg-config \
     default-libmysqlclient-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
@@ -20,11 +20,11 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the Django project files to the container
+# Copy the rest of the application files to the container
 COPY . /app/
 
-# Expose the port that Django will run on
+# Expose the port your app will run on
 EXPOSE 8000
 
-# Run the Django application
+# Define the command to run your application
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
